@@ -1,9 +1,9 @@
 " Vim indent file
-" Language:	Php
+" Language:	PHP
 " Author:	Miles Lott <milos@groupwhere.org>
-" URL:		http://groupwhere.org/php.vim
-" Last Change:	2002 Dec 16
-" Version:	0.3
+" URL:		http://milosch.dyndns.org/php.vim
+" Last Change:	2004 May 18
+" Version:	0.4
 " Notes:  Close all switches with default:\nbreak; and it will look better.
 "         Also, open and close brackets should be alone on a line.
 "         This is my preference, and the only way this will look nice.
@@ -11,7 +11,11 @@
 "         switch/case.  It is nearly perfect for anyone regardless of your
 "         stance on brackets.
 "
-" Options	php_noindent_switch=1 -- do not try to indent switch/case statements (version 0.1 behavior)
+" Changes: Fixes for closing php tag, switch statement closure, and php_indent_shortopentags
+"          option from Steffen Bruentjen <vim@kontraphon.de>
+"
+" Options: php_noindent_switch=1 -- do not try to indent switch/case statements (version 0.1 behavior)
+"          php_indent_shortopentags=1 -- indent after short php open tags, too
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -20,7 +24,8 @@ endif
 let b:did_indent = 1
 
 setlocal indentexpr=GetPhpIndent()
-setlocal indentkeys+=0=,0),=EO
+"setlocal indentkeys+=0=,0),=EO
+setlocal indentkeys+=0=,0),=EO,=>
 
 " Only define the function once.
 if exists("*GetPhpIndent")
@@ -47,8 +52,14 @@ function GetPhpIndent()
 	" Indent after php open tags
 	if line =~ '<?php'
 		let ind = ind + &sw
+		" indent after short open tags
 	endif
-	if cline =~ '\?\>' " Please fix this...
+	if exists('g:php_indent_shortopentags')
+		if line =~ '<?'
+			let ind = ind + &sw
+		endif
+	endif
+	if cline =~ '\M?>'
 		let ind = ind - &sw
 	endif
 
@@ -77,6 +88,13 @@ function GetPhpIndent()
 			if line =~ '^\s*break;\|^\s*return\|' && cline =~ '^\s*[)}]' && pline =~ 'default:'
 				let ind = ind - &sw
 			endif
+		endif
+		" Search the matching bracket (with searchpair()) and set the indent of cline
+		" to the indent of the matching line.
+		if cline =~ '^\s*}'
+			call cursor(line('.'), 1)
+			let ind = indent(searchpair('{', '', '}', 'bW', 'synIDattr(synID(line("."), col("."), 0), "name") =~? "string"'))
+			return ind
 		endif
 
 		if line =~ 'default:'
