@@ -1,9 +1,9 @@
 " Vim indent file
 " Language:	PHP
 " Author:	Miles Lott <milos@groupwhere.org>
-" URL:		http://milosch.dyndns.org/php.vim
-" Last Change:	2005 March 21
-" Version:	0.6
+" URL:		http://www.groupwhere.org/php.vim
+" Last Change:	2006 August 1
+" Version:	0.7
 " Notes:  Close all switches with default:\nbreak; and it will look better.
 "         Also, open and close brackets should be alone on a line.
 "         This is my preference, and the only way this will look nice.
@@ -11,7 +11,8 @@
 "         switch/case.  It is nearly perfect for anyone regardless of your
 "         stance on brackets.
 "
-" Changes: 0.6 - fix indentation for closing bracket (patch from ITLab at MUSC - http://www.itlab.musc.edu/)
+" Changes: 0.7 - fix for /* comment */ indentation from Devin Weaver <devin@tritarget.com>
+"          0.6 - fix indentation for closing bracket (patch from ITLab at MUSC - http://www.itlab.musc.edu/)
 "          0.5 - fix duplicate indent on open tag, and empty bracketed statements.
 "          0.4 - Fixes for closing php tag, switch statement closure, and php_indent_shortopentags
 "          option from Steffen Bruentjen <vim@kontraphon.de>
@@ -110,6 +111,14 @@ function GetPhpIndent()
 		if line =~ 'default:'
 			let ind = ind + &sw
 		endif
+
+		if line =~ '/\*'
+			let ind = ind + 1
+		endif
+		if line =~ '\*/'
+			let ind = ind - 1
+		endif
+
 		return ind
 	endif
 endfunction
