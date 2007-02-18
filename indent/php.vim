@@ -3,7 +3,7 @@
 " Author:	Miles Lott <milos@groupwhere.org>
 " URL:		http://www.groupwhere.org/php.vim
 " Last Change:	2007 February 18
-" Version:	1.1
+" Version:	1.2
 " Notes:  Close all switches with default:\nbreak; and it will look better.
 "         Also, open and close brackets should be alone on a line.
 "         This is my preference, and the only way this will look nice.
@@ -12,7 +12,9 @@
 "         stance on brackets.  Also note that we do not attempt to format html
 "         code.
 "
-" Changes: 1.1 - Sameday change/fix to skip lines commented by # also
+" Changes: 1.2 - Found syntax error in renaming of variable after 0.7 which
+"            broke the formatting of switch/case
+"          1.1 - Sameday change/fix to skip lines commented by # also
 "          1.0 - Sameday change/fix to skip lines commented by // (Don't format other code
 "            if in // comment section
 "          0.9 - Sameday bugfix for certain commenting styles, e.g. closing with /**/
@@ -84,18 +86,18 @@ function GetPhpIndent()
 	if lnum == 0
 		return 0
 	endif
-	let lline = getline(lnum)    " last line
+	let line = getline(lnum)    " last line
 	let lindent = v:(lnum)
 	let cline = getline(v:lnum) " current line
 	let pline = getline(lnum - 1) " previous to last line
 	let ind = indent(lnum)
 
 	" Indent after php open tag
-	if lline =~ '<?php'
+	if line =~ '<?php'
 		let ind = ind + &sw
 	elseif exists('g:php_indent_shortopentags')
 		" indent after short open tag
-		if lline =~ '<?'
+		if line =~ '<?'
 			let ind = ind + &sw
 		endif
 	endif
@@ -106,7 +108,7 @@ function GetPhpIndent()
 
 	if exists("b:php_noindent_switch") " version 1 behavior, diy switch/case,etc
 		" Indent blocks enclosed by {} or ()
-		if lline =~ '[{(]\s*\(#[^)}]*\)\=$'
+		if line =~ '[{(]\s*\(#[^)}]*\)\=$'
 			let ind = ind + &sw
 		endif
 		if cline =~ '^\s*[)}]'
@@ -115,11 +117,11 @@ function GetPhpIndent()
 		return ind
 	else " Post 0.1 behavior, main logic
 		" Fix indenting for // and # style comments
-		if lline =~ '//' && cline =~ '//'
+		if line =~ '//' && cline =~ '//'
 			let ind = lindent
 			return ind
 		endif
-		if lline =~ '#' && cline =~ '#'
+		if line =~ '#' && cline =~ '#'
 			let ind = lindent
 			return ind
 		endif
@@ -132,7 +134,7 @@ function GetPhpIndent()
 		endif
 		" Try to indent switch/case statements as well
 		" Indent blocks enclosed by {} or () or case statements, with some anal requirements
-		if lline =~ 'case.*:\|[{(]\s*\(#[^)}]*\)\=$'
+		if line =~ 'case.*:\|[{(]\s*\(#[^)}]*\)\=$'
 			let ind = ind + &sw
 			" return if the current line is not another case statement of the previous line is a bracket open
 			if cline !~ '.*case.*:\|default:' || line =~ '[{(]\s*\(#[^)}]*\)\=$'
@@ -143,7 +145,7 @@ function GetPhpIndent()
 			let ind = ind - &sw
 			" if the last line is a break or return, or the current line is a close bracket,
 			" or if the previous line is a default statement, subtract another
-			if lline =~ '^\s*break;\|^\s*return\|' && cline =~ '^\s*[)}]' && pline =~ 'default:'
+			if line =~ '^\s*break;\|^\s*return\|' && cline =~ '^\s*[)}]' && pline =~ 'default:'
 				let ind = ind - &sw
 			endif
 		endif
@@ -155,25 +157,24 @@ function GetPhpIndent()
 			return ind
 		endif
 
-		if lline =~ 'default:'
+		if line =~ 'default:'
 			let ind = ind + &sw
 		endif
 
-		if lline =~ '/\*\s*\*/'
+		if line =~ '/\*\s*\*/'
 			" Last line contained a mixed comment open and close
 			let ind = ind - 1
 			return ind
 		endif
 
-		if lline =~ '/\*'
+		if line =~ '/\*'
 			" Last line was the start of a comment section
 			let ind = ind + 1
 		endif
-		if lline =~ '\*/\s*$'
+		if line =~ '\*/\s*$'
 			" Last line was the end of a comment section
 			let ind = ind - 1
 		endif
-
 
 		return ind
 	endif
