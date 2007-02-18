@@ -3,7 +3,7 @@
 " Author:	Miles Lott <milos@groupwhere.org>
 " URL:		http://www.groupwhere.org/php.vim
 " Last Change:	2007 February 18
-" Version:	0.9
+" Version:	1.0
 " Notes:  Close all switches with default:\nbreak; and it will look better.
 "         Also, open and close brackets should be alone on a line.
 "         This is my preference, and the only way this will look nice.
@@ -12,7 +12,9 @@
 "         stance on brackets.  Also note that we do not attempt to format html
 "         code.
 "
-" Changes: 0.9 - Sameday bugfix for certain commenting styles, e.g. closing with /**/
+" Changes: 1.0 - Sameday change/fix to skip lines commented by // (Don't format other code
+"            if in // comment section
+"          0.9 - Sameday bugfix for certain commenting styles, e.g. closing with /**/
 "          0.8 - Borrowed methods from current dist of php.vim for automatic formatting of
 "            comments (http://www.2072productions.com/?to=phpindent.txt)
 "          0.7 - fix for /* comment */ indentation from Devin Weaver <devin@tritarget.com>
@@ -82,6 +84,7 @@ function GetPhpIndent()
 		return 0
 	endif
 	let lline = getline(lnum)    " last line
+	let lindent = v:(lnum)
 	let cline = getline(v:lnum) " current line
 	let pline = getline(lnum - 1) " previous to last line
 	let ind = indent(lnum)
@@ -109,7 +112,12 @@ function GetPhpIndent()
 			let ind = ind - &sw
 		endif
 		return ind
-	else
+	else " Post 0.1 behavior, main logic
+		" Fix indenting for // style comments
+		if lline =~ '//' && cline =~ '//'
+			let ind = lindent
+			return ind
+		endif
 		" Search the matching bracket (with searchpair()) and set the indent of
 		" to the indent of the matching line.
 		if cline =~ '^\s*}'
@@ -146,9 +154,9 @@ function GetPhpIndent()
 			let ind = ind + &sw
 		endif
 
-		if lline =~ '^\s*/\*\s*\*/'
+		if lline =~ '/\*\s*\*/'
 			" Last line contained a mixed comment open and close
-			let ind = ind -1
+			let ind = ind - 1
 			return ind
 		endif
 
@@ -156,10 +164,11 @@ function GetPhpIndent()
 			" Last line was the start of a comment section
 			let ind = ind + 1
 		endif
-		if lline =~ '^\s*\*\/'
+		if lline =~ '\*/\s*$'
 			" Last line was the end of a comment section
 			let ind = ind - 1
 		endif
+
 
 		return ind
 	endif
