@@ -3,7 +3,7 @@
 " Author:	Miles Lott <milos@groupwhere.org>
 " URL:		http://www.groupwhere.org/php.vim
 " Last Change:	2007 February 18
-" Version:	0.8
+" Version:	0.9
 " Notes:  Close all switches with default:\nbreak; and it will look better.
 "         Also, open and close brackets should be alone on a line.
 "         This is my preference, and the only way this will look nice.
@@ -12,7 +12,8 @@
 "         stance on brackets.  Also note that we do not attempt to format html
 "         code.
 "
-" Changes: 0.8 - Borrowed methods from current dist of php.vim for automatic formatting of
+" Changes: 0.9 - Sameday bugfix for certain commenting styles, e.g. closing with /**/
+"          0.8 - Borrowed methods from current dist of php.vim for automatic formatting of
 "            comments (http://www.2072productions.com/?to=phpindent.txt)
 "          0.7 - fix for /* comment */ indentation from Devin Weaver <devin@tritarget.com>
 "          0.6 - fix indentation for closing bracket (patch from ITLab at MUSC - http://www.itlab.musc.edu/)
@@ -32,9 +33,9 @@ let b:did_indent = 1
 let b:optionsset = 0
 
 if exists("php_no_autocomment")
-    let b:php_no_autocomment = php_no_autocomment
+	let b:php_no_autocomment = php_no_autocomment
 else
-    let b:php_no_autocomment = 1
+	let b:php_no_autocomment = 1
 endif
 
 setlocal indentexpr=GetPhpIndent()
@@ -53,24 +54,24 @@ endif
 
 let s:autorestoptions = 0
 if ! s:autorestoptions
-    au BufWinEnter,Syntax	*.php,*.php3,*.php4,*.php5	call ResetOptions()
-    let s:autorestoptions = 1
+	au BufWinEnter,Syntax	*.php,*.php3,*.php4,*.php5	call ResetOptions()
+	let s:autorestoptions = 1
 endif
 
 function! ResetOptions()
-    if ! b:optionsset
+	if ! b:optionsset
 		if b:php_no_autocomment
-		    setlocal comments=s1:/*,mb:*,ex:*/,://,:#
-		    setlocal formatoptions-=t
-		    setlocal formatoptions+=q
-		    setlocal formatoptions+=r
-		    setlocal formatoptions+=o
-		    setlocal formatoptions+=w
-		    setlocal formatoptions+=c
-		    setlocal formatoptions+=b
+			setlocal comments=s1:/*,mb:*,ex:*/,://,:#
+			setlocal formatoptions-=t
+			setlocal formatoptions+=q
+			setlocal formatoptions+=r
+			setlocal formatoptions+=o
+			setlocal formatoptions+=w
+			setlocal formatoptions+=c
+			setlocal formatoptions+=b
 		endif
 		let b:optionsset = 1
-    endif
+	endif
 endfunc
 
 function GetPhpIndent()
@@ -144,11 +145,18 @@ function GetPhpIndent()
 		if lline =~ 'default:'
 			let ind = ind + &sw
 		endif
-		if lline =~ '^\s*/\*'
+
+		if lline =~ '^\s*/\*\s*\*/'
+			" Last line contained a mixed comment open and close
+			let ind = ind -1
+			return ind
+		endif
+
+		if lline =~ '/\*'
 			" Last line was the start of a comment section
 			let ind = ind + 1
 		endif
-		if lline =~ '^\s*\*/'
+		if lline =~ '^\s*\*\/'
 			" Last line was the end of a comment section
 			let ind = ind - 1
 		endif
