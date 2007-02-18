@@ -3,7 +3,7 @@
 " Author:	Miles Lott <milos@groupwhere.org>
 " URL:		http://www.groupwhere.org/php.vim
 " Last Change:	2007 February 18
-" Version:	1.0
+" Version:	1.1
 " Notes:  Close all switches with default:\nbreak; and it will look better.
 "         Also, open and close brackets should be alone on a line.
 "         This is my preference, and the only way this will look nice.
@@ -12,7 +12,8 @@
 "         stance on brackets.  Also note that we do not attempt to format html
 "         code.
 "
-" Changes: 1.0 - Sameday change/fix to skip lines commented by // (Don't format other code
+" Changes: 1.1 - Sameday change/fix to skip lines commented by # also
+"          1.0 - Sameday change/fix to skip lines commented by // (Don't format other code
 "            if in // comment section
 "          0.9 - Sameday bugfix for certain commenting styles, e.g. closing with /**/
 "          0.8 - Borrowed methods from current dist of php.vim for automatic formatting of
@@ -113,8 +114,12 @@ function GetPhpIndent()
 		endif
 		return ind
 	else " Post 0.1 behavior, main logic
-		" Fix indenting for // style comments
+		" Fix indenting for // and # style comments
 		if lline =~ '//' && cline =~ '//'
+			let ind = lindent
+			return ind
+		endif
+		if lline =~ '#' && cline =~ '#'
 			let ind = lindent
 			return ind
 		endif
